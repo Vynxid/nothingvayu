@@ -27,9 +27,15 @@
 #include <linux/bootmem.h>
 #include <linux/task_work.h>
 #include <linux/sched/task.h>
+<<<<<<< HEAD
 #if defined(CONFIG_KSU_SUSFS_SUS_MOUNT) || defined(CONFIG_KSU_SUSFS_TRY_UMOUNT)
 #include <linux/susfs_def.h>
 #endif
+=======
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+#include <linux/susfs_def.h>
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 
 #include "pnode.h"
 #include "internal.h"
@@ -37,6 +43,7 @@
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 extern bool susfs_is_current_ksu_domain(void);
 extern bool susfs_is_current_zygote_domain(void);
+<<<<<<< HEAD
 
 static DEFINE_IDA(susfs_mnt_id_ida);
 static DEFINE_IDA(susfs_mnt_group_ida);
@@ -59,6 +66,18 @@ bool susfs_is_auto_add_sus_bind_mount_enabled = true;
 extern void susfs_auto_add_try_umount_for_bind_mount(struct path *path);
 bool susfs_is_auto_add_try_umount_for_bind_mount_enabled = true;
 #endif
+=======
+extern bool susfs_is_boot_completed_triggered;
+static DEFINE_IDA(susfs_mnt_id_ida);
+static DEFINE_IDA(susfs_mnt_group_ida);
+static atomic64_t susfs_ksu_mounts = ATOMIC64_INIT(0);
+static int susfs_mnt_id_start = DEFAULT_KSU_MNT_ID;
+static int susfs_mnt_group_start = DEFAULT_KSU_MNT_GROUP_ID;
+
+#define CL_ZYGOTE_COPY_MNT_NS BIT(24) /* used by copy_mnt_ns() */
+#define CL_COPY_MNT_NS BIT(25) /* used by copy_mnt_ns() */
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 
 /* Maximum number of mounts in a mount namespace */
 unsigned int sysctl_mount_max __read_mostly = 100000;
@@ -130,7 +149,11 @@ static inline struct hlist_head *mp_hash(struct dentry *dentry)
 }
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 // Our own mnt_alloc_id() that assigns mnt_id starting from DEFAULT_SUS_MNT_ID
+=======
+// Our own mnt_alloc_id() that assigns mnt_id starting from DEFAULT_KSU_MNT_ID
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 static int susfs_mnt_alloc_id(struct mount *mnt)
 {
 	int res;
@@ -170,6 +193,7 @@ static void mnt_free_id(struct mount *mnt)
 	int id = mnt->mnt_id;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	int mnt_id_backup = mnt->mnt.susfs_mnt_id_backup;
+<<<<<<< HEAD
 	// We should first check the 'mnt->mnt.susfs_mnt_id_backup', see if it is DEFAULT_SUS_MNT_ID_FOR_KSU_PROC_UNSHARE
 	// if so, these mnt_id were not assigned by mnt_alloc_id() so we don't need to free it.
 	if (unlikely(mnt_id_backup == DEFAULT_SUS_MNT_ID_FOR_KSU_PROC_UNSHARE)) {
@@ -177,6 +201,15 @@ static void mnt_free_id(struct mount *mnt)
 	}
 	// Now we can check if its mnt_id is sus
 	if (unlikely(mnt->mnt_id >= DEFAULT_SUS_MNT_ID)) {
+=======
+	// We should first check the 'mnt->mnt.susfs_mnt_id_backup', see if it is DEFAULT_KSU_MNT_ID_FOR_KSU_PROC_UNSHARE
+	// if so, these mnt_id were not assigned by mnt_alloc_id() so we don't need to free it.
+	if (unlikely(mnt_id_backup == DEFAULT_KSU_MNT_ID_FOR_KSU_PROC_UNSHARE)) {
+		return;
+	}
+	// Now we can check if its mnt_id is sus
+	if (unlikely(mnt->mnt_id >= DEFAULT_KSU_MNT_ID)) {
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 		spin_lock(&mnt_id_lock);
 		ida_remove(&susfs_mnt_id_ida, id);
 		if (susfs_mnt_id_start > id)
@@ -214,10 +247,17 @@ static int mnt_alloc_group_id(struct mount *mnt)
 	int res;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 	if (mnt->mnt_id >= DEFAULT_SUS_MNT_ID) {
 		if (!ida_pre_get(&susfs_mnt_group_ida, GFP_KERNEL))
 			return -ENOMEM;
 		// If so, assign a sus mnt_group id DEFAULT_SUS_MNT_GROUP_ID from susfs_mnt_group_ida
+=======
+	if (mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		if (!ida_pre_get(&susfs_mnt_group_ida, GFP_KERNEL))
+			return -ENOMEM;
+		// If so, assign a sus mnt_group id DEFAULT_KSU_MNT_GROUP_ID from susfs_mnt_group_ida
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 		res = ida_get_new_above(&susfs_mnt_group_ida,
 					susfs_mnt_group_start,
 					&mnt->mnt_group_id);
@@ -245,9 +285,15 @@ void mnt_release_group_id(struct mount *mnt)
 {
 	int id = mnt->mnt_group_id;
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 	// If mnt->mnt_group_id >= DEFAULT_SUS_MNT_GROUP_ID, it means 'mnt' is also sus mount,
 	// then we free the mnt->mnt_group_id from susfs_mnt_group_ida
 	if (id >= DEFAULT_SUS_MNT_GROUP_ID) {
+=======
+	// If mnt->mnt_group_id >= DEFAULT_KSU_MNT_GROUP_ID, it means 'mnt' is also sus mount,
+	// then we free the mnt->mnt_group_id from susfs_mnt_group_ida
+	if (id >= DEFAULT_KSU_MNT_GROUP_ID) {
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 		ida_remove(&susfs_mnt_group_ida, id);
 		if (susfs_mnt_group_start > id)
 			susfs_mnt_group_start = id;
@@ -1253,12 +1299,20 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 		// if it is doing unshare
 		mnt = alloc_vfsmnt(old->mnt_devname, true, old->mnt_id);
 		if (mnt) {
+<<<<<<< HEAD
 			mnt->mnt.susfs_mnt_id_backup = DEFAULT_SUS_MNT_ID_FOR_KSU_PROC_UNSHARE;
+=======
+			mnt->mnt.susfs_mnt_id_backup = DEFAULT_KSU_MNT_ID_FOR_KSU_PROC_UNSHARE;
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 		}
 		goto bypass_orig_flow;
 	}
 	// Secondly, check if it is zygote process and no matter it is doing unshare or not
+<<<<<<< HEAD
 	if (likely(is_current_zygote_domain) && (old->mnt_id >= DEFAULT_SUS_MNT_ID)) {
+=======
+	if (likely(is_current_zygote_domain) && (old->mnt_id >= DEFAULT_KSU_MNT_ID)) {
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 		/* Important Note: 
 		 *  - Here we can't determine whether the unshare is called zygisk or not,
 		 *    so we can only patch out the unshare code in zygisk source code for now
@@ -1268,7 +1322,11 @@ static struct mount *clone_mnt(struct mount *old, struct dentry *root,
 		goto bypass_orig_flow;
 	}
 	// Lastly, for other process that is doing unshare operation, but only deal with old sus mount
+<<<<<<< HEAD
 	if ((flag & CL_COPY_MNT_NS) && (old->mnt_id >= DEFAULT_SUS_MNT_ID)) {
+=======
+	if ((flag & CL_COPY_MNT_NS) && (old->mnt_id >= DEFAULT_KSU_MNT_ID)) {
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 		mnt = alloc_vfsmnt(old->mnt_devname, true, 0);
 		goto bypass_orig_flow;
 	}
@@ -2107,6 +2165,7 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 	p = mnt;
 	list_for_each_entry(r, &mnt->mnt_mounts, mnt_child) {
 		struct mount *s;
+
 		if (!is_subdir(r->mnt_mountpoint, dentry))
 			continue;
 
@@ -2138,7 +2197,7 @@ struct mount *copy_tree(struct mount *mnt, struct dentry *dentry,
 				goto out;
 			lock_mount_hash();
 			list_add_tail(&q->mnt_list, &res->mnt_list);
-			attach_mnt(q, parent, p->mnt_mp);
+			attach_mnt(q, parent, p->mnt_mp);			
 			unlock_mount_hash();
 		}
 	}
@@ -2601,6 +2660,7 @@ static int do_loopback(struct path *path, const char *old_name,
 		umount_tree(mnt, UMOUNT_SYNC);
 		unlock_mount_hash();
 	}
+<<<<<<< HEAD
 #if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT)
 	// Check if bind mounted path should be hidden and umounted automatically.
 	// And we target only process with ksu domain.
@@ -2621,6 +2681,8 @@ static int do_loopback(struct path *path, const char *old_name,
 orig_flow:
 #endif
 #endif // #if defined(CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT) || defined(CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT)
+=======
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 
 out2:
 	unlock_mount(mp);
@@ -3384,7 +3446,11 @@ struct mnt_namespace *copy_mnt_ns(unsigned long flags, struct mnt_namespace *ns,
 	if (is_zygote_pid) {
 		last_entry_mnt_id = list_first_entry(&new_ns->list, struct mount, mnt_list)->mnt_id;
 		list_for_each_entry(q, &new_ns->list, mnt_list) {
+<<<<<<< HEAD
 			if (unlikely(q->mnt_id >= DEFAULT_SUS_MNT_ID)) {
+=======
+			if (unlikely(q->mnt_id >= DEFAULT_KSU_MNT_ID)) {
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 				continue;
 			}
 			q->mnt.susfs_mnt_id_backup = q->mnt_id;
@@ -3938,6 +4004,7 @@ const struct proc_ns_operations mntns_operations = {
 	.owner		= mntns_owner,
 };
 
+<<<<<<< HEAD
 #ifdef CONFIG_KSU_SUSFS_TRY_UMOUNT
 extern void susfs_try_umount_all(uid_t uid);
 void susfs_run_try_umount_for_current_mnt_ns(void) {
@@ -3969,5 +4036,30 @@ bool susfs_is_mnt_devname_ksu(struct path *path) {
 		}
 	}
 	return false;
+=======
+#ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+/* Reorder the mnt_id after all sus mounts are umounted during ksu_handle_setuid() */
+void susfs_reorder_mnt_id(void) {
+	struct mnt_namespace *mnt_ns = current->nsproxy->mnt_ns;
+	struct mount *mnt;
+	int first_mnt_id = 0;
+
+	if (!mnt_ns) {
+		return;
+	}
+
+	// Do not reorder the mnt_id if there is no any ksu mount at all
+	if (atomic64_read(&susfs_ksu_mounts) == 0) {
+		return;
+	}
+
+	get_mnt_ns(mnt_ns);
+	first_mnt_id = list_first_entry(&mnt_ns->list, struct mount, mnt_list)->mnt_id;
+	list_for_each_entry(mnt, &mnt_ns->list, mnt_list) {
+		mnt->mnt.susfs_mnt_id_backup = mnt->mnt_id;
+		mnt->mnt_id = first_mnt_id++;
+	}
+	put_mnt_ns(mnt_ns);
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 }
 #endif

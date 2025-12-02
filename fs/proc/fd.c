@@ -61,9 +61,15 @@ static int seq_show(struct seq_file *m, void *v)
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
 	mnt = real_mount(file->f_path.mnt);
+<<<<<<< HEAD
 	if (likely(current->susfs_task_state & TASK_STRUCT_NON_ROOT_USER_APP_PROC) &&
 			mnt->mnt_id >= DEFAULT_SUS_MNT_ID) {
 		for (; mnt->mnt_id >= DEFAULT_SUS_MNT_ID; mnt = mnt->mnt_parent) { }
+=======
+	if (likely(susfs_is_current_proc_umounted()) &&
+			mnt->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		for (; mnt->mnt_id >= DEFAULT_KSU_MNT_ID; mnt = mnt->mnt_parent) { }
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 	}
 	seq_printf(m, "pos:\t%lli\nflags:\t0%o\nmnt_id:\t%i\n",
 			(long long)file->f_pos, f_flags,

@@ -22,7 +22,11 @@
 #include "internal.h"
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 extern bool susfs_is_current_ksu_domain(void);
+=======
+extern bool susfs_hide_sus_mnts_for_all_procs;
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 #endif
 
 static unsigned mounts_poll(struct file *file, poll_table *wait)
@@ -110,8 +114,14 @@ static int show_vfsmnt(struct seq_file *m, struct vfsmount *mnt)
 	int err;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 	if (unlikely((r->mnt_id >= DEFAULT_SUS_MNT_ID) && !susfs_is_current_ksu_domain()))
 		return 0;
+=======
+	if (susfs_hide_sus_mnts_for_all_procs && r->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		return 0;
+	}
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 #endif
 
 	if (sb->s_op->show_devname) {
@@ -151,10 +161,17 @@ static int show_mountinfo(struct seq_file *m, struct vfsmount *mnt)
 	int err;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 	if (unlikely((r->mnt_id >= DEFAULT_SUS_MNT_ID) && !susfs_is_current_ksu_domain()))
 		return 0;
 #endif
 
+=======
+	if (susfs_hide_sus_mnts_for_all_procs && r->mnt_id >= DEFAULT_KSU_MNT_ID) {
+               return 0;
+	}
+#endif
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 	seq_printf(m, "%i %i %u:%u ", r->mnt_id, r->mnt_parent->mnt_id,
 		   MAJOR(sb->s_dev), MINOR(sb->s_dev));
 	if (sb->s_op->show_path) {
@@ -220,8 +237,14 @@ static int show_vfsstat(struct seq_file *m, struct vfsmount *mnt)
 	int err;
 
 #ifdef CONFIG_KSU_SUSFS_SUS_MOUNT
+<<<<<<< HEAD
 	if (unlikely((r->mnt_id >= DEFAULT_SUS_MNT_ID) && !susfs_is_current_ksu_domain()))
 		return 0;
+=======
+	if (susfs_hide_sus_mnts_for_all_procs && r->mnt_id >= DEFAULT_KSU_MNT_ID) {
+		return 0;
+	}
+>>>>>>> e63d96f4e391 (BACKPORT: Implement SuSFS v2.0.0)
 #endif
 
 	/* device */
